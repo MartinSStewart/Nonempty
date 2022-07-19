@@ -49,6 +49,8 @@ interface NonemptyList
         max,
         joinMap,
         find,
+        findIndex,
+        iterate,
         sublist,
         intersperse,
         split
@@ -467,6 +469,51 @@ find : NonemptyList a, (a -> Bool) -> Result a [NotFound]*
 find = \nonempty, predicate ->
     List.find (toList nonempty) predicate
 
+
+## Returns the index at which the first element in the list
+## satisfying a predicate function can be found.
+## If no satisfying element is found, an `Err NotFound` is returned.
+findIndex : NonemptyList elem, (elem -> Bool) -> Result Nat [NotFound]*
+findIndex = \nonempty, matcher ->
+    foundIndex = iterate nonempty 0 \index, elem ->
+        if matcher elem then
+            Break index
+        else
+            Continue (index + 1)
+
+    when foundIndex is
+        Break index -> Ok index
+        Continue _ -> Err NotFound
+
+
+iterate : NonemptyList elem, s, (s, elem -> [Continue s, Break b]) -> [Continue s, Break b]
+iterate = \nonempty, init, func ->
+    iterHelp nonempty init func 0 (len nonempty)
+
+
+## internal helper
+iterHelp : NonemptyList elem, s, (s, elem -> [Continue s, Break b]), Nat, Nat -> [Continue s, Break b]
+iterHelp = \list, state, f, index, length ->
+    if index < length then
+        when f state (getUnsafe list index) is
+            Continue nextState ->
+                iterHelp list nextState f (index + 1) length
+
+            Break b ->
+                Break b
+    else
+        Continue state
+
+
+## Remove this as soon as List.iterate is exposed
+getUnsafe : NonemptyList a, Nat -> a
+getUnsafe = \list, index ->
+    when get list index is
+        Ok ok ->
+            ok
+
+        Err _ ->
+            getUnsafe list index
 
 sublist : NonemptyList a, { start: Nat, len: Nat } -> List a
 sublist = \nonempty, config ->
