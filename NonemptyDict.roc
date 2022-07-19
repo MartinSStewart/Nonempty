@@ -2,6 +2,7 @@ interface NonemptyDict
     exposes [
         NonemptyDict,
         toDict,
+        fromDict,
         get,
         walk,
         insert,
@@ -22,12 +23,26 @@ interface NonemptyDict
         Dict.{ Dict },
     ]
 
+
 NonemptyDict k v := NonemptyList [Pair k v]
+
 
 toDict : NonemptyDict k v -> Dict k v
 toDict = \@NonemptyDict nonempty ->
     NonemptyList.toList nonempty
     |> List.walk Dict.empty (\dict, Pair key value -> Dict.insert dict key value)
+
+
+fromDict : Dict k v -> Result (NonemptyDict k v) [ DictIsEmpty ]*
+fromDict = \dict ->
+    list = List.map2 (Dict.keys dict) (Dict.values dict) Pair
+    when NonemptyList.fromList list is
+        Ok nonempty ->
+            @NonemptyDict nonempty |> Ok
+
+        Err ListIsEmpty ->
+            Err DictIsEmpty
+
 
 get : NonemptyDict k v, k -> Result v [KeyNotFound]*
 get = \@NonemptyDict list, needle ->

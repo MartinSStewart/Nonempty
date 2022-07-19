@@ -72,14 +72,14 @@ toList = \@NonemptyList { rest, lastItem } ->
     List.append rest lastItem
 
 
-fromList : List a -> Result (NonemptyList a) [ OutOfBounds ]*
+fromList : List a -> Result (NonemptyList a) [ ListIsEmpty ]*
 fromList = \list ->
     when List.get list (List.len list - 1) is
         Ok value ->
             @NonemptyList { rest: List.dropLast list, lastItem: value } |> Ok
 
-        Err error ->
-            Err error
+        Err OutOfBounds ->
+            Err ListIsEmpty
 
 ## Get the number of elements in a list.
 ## Since the list is nonempty, this will always be greater than 0.
