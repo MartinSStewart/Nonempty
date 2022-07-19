@@ -53,13 +53,18 @@ interface NonemptyList
         intersperse,
         split
     ]
-    imports []
+    imports [
+        Bool.{ Bool },
+        Result.{ Result },
+        List
+    ]
 
-
+## A list that contains at least one element.
 NonemptyList a :=
     { rest: (List a), lastItem: a }
 
 
+## Convert a NonemptyList to an ordinary list
 toList : NonemptyList a -> List a
 toList = \@NonemptyList { rest, lastItem } ->
     List.append rest lastItem
@@ -74,12 +79,17 @@ fromList = \list ->
         Err error ->
             Err error
 
-
+## Get the number of elements in a list.
+## Since the list is nonempty, this will always be greater than 0.
 len : NonemptyList a -> Nat
 len = \@NonemptyList { rest } ->
     List.len rest + 1
 
-
+## Get an element from a list as a given index
+##
+## >>> list = NonemptyList.appendFromList [ "a", "b" ] "c"
+## >>> NonemptyList.get list 2 == Ok "c"
+## >>> NonemptyList.get list 3 == Err OutOfBounds
 get : NonemptyList a, Nat -> Result a [ OutOfBounds ]*
 get = \nonempty, index ->
     (@NonemptyList { rest, lastItem }) = nonempty
@@ -88,7 +98,16 @@ get = \nonempty, index ->
     else
         List.get rest (Num.subSaturated index 1)
 
-
+## Replaces the element at the given index with a replacement.
+##
+## >>> list = NonemptyList.appendFromList [ "a", "b" ] "c"
+## >>> list2 = NonemptyList.set list 1 "B"
+## >>> list2 == NonemptyList.appendFromList [ "a", "B" ] "c"
+##
+## If the given index is outside the bounds of the list, returns the original
+## list unmodified.
+##
+## To drop the element at a given index, instead of replacing it, see [NonemptyList.dropAt].
 set : NonemptyList a, Nat, a -> NonemptyList a
 set = \nonempty, index, value ->
     (@NonemptyList { rest, lastItem }) = nonempty
