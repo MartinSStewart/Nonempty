@@ -13,6 +13,8 @@ interface NonemptyList
         prepend,
         prependFromList,
         concat,
+        concatListLeft,
+        concatListRight,
         single,
         repeat,
         reverse,
@@ -162,6 +164,22 @@ prependFromList = \list, item ->
 concat : NonemptyList a, NonemptyList a -> NonemptyList a
 concat = \a, (@NonemptyList { rest, lastItem }) ->
     @NonemptyList { rest: List.concat (toList a) rest, lastItem: lastItem }
+
+
+concatListLeft : List a, NonemptyList a -> NonemptyList a
+concatListLeft = \a, (@NonemptyList { rest, lastItem }) ->
+    @NonemptyList { rest: List.concat a rest, lastItem: lastItem }
+
+
+concatListRight : NonemptyList a, List a -> NonemptyList a
+concatListRight = \nonempty, list ->
+    when List.last list is
+        Ok lastItem ->
+            { rest: List.concat (toList nonempty) (List.dropLast list), lastItem: lastItem }
+                |> @NonemptyList
+
+        Err _ ->
+            nonempty
 
 
 single : a -> NonemptyList a
